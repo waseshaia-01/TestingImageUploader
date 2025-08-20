@@ -61,12 +61,18 @@
         console.error("Error listing images:", error.message);
         return;
       }
-
+    
       const listEl = document.getElementById("imageList");
       listEl.innerHTML = "";
       data.forEach(file => {
         const li = document.createElement("li");
-        li.textContent = file.name;
+    
+        // ✅ Show original filename only (remove timestamp prefix)
+        const displayName = file.name.includes("_") 
+          ? file.name.split("_").slice(1).join("_") 
+          : file.name;
+    
+        li.textContent = displayName;
         listEl.appendChild(li);
       });
     }
