@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendee Dashboard</title>
+<script src="https://unpkg.com/@supabase/supabase-js"></script>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+  th { background:#f0f0f0; }
+  button { margin-top: 10px; padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Attendee Dashboard</h1>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Status</th><th>Image</th></tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+<button onclick="goToScanner()">Back to Scanner</button>
+
+<script>
+const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function goToScanner() { window.location.href = "index.html"; }
+
+async function loadTable() {
+  const { data, error } = await supabase.from("attendees").select("*");
+  if(error) return console.error(error);
+
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+  data.forEach(a => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${a.id}</td>
+      <td>${a.name}</td>
+      <td>${a.status}</td>
+      <td><img src="${a.image_url}" width="50"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+loadTable();
+</script>
+</body>
+</html>
