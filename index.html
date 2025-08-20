@@ -9,6 +9,7 @@
     body { font-family: Arial, sans-serif; margin: 30px; }
     h1 { color: #333; }
     input { margin: 10px 0; }
+    button { padding: 6px 12px; cursor: pointer; }
     ul { margin-top: 20px; }
     li { margin: 5px 0; }
   </style>
@@ -22,13 +23,15 @@
   <ul id="imageList"></ul>
 
   <script>
-    // 🔑 Replace with your own values from Supabase
+    // 🔑 Your Supabase credentials
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const BUCKET_NAME = "images"; // must match your bucket name
+    const BUCKET_NAME = "images";
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ✅ Correct: assign to `client`
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Upload file
     async function uploadImage() {
       const fileInput = document.getElementById("fileInput");
       if (fileInput.files.length === 0) {
@@ -39,7 +42,7 @@
       const file = fileInput.files[0];
       const fileName = `${Date.now()}_${file.name}`;
 
-      let { error } = await supabase.storage
+      let { error } = await client.storage
         .from(BUCKET_NAME)
         .upload(fileName, file);
 
@@ -51,8 +54,9 @@
       }
     }
 
+    // List files
     async function listImages() {
-      const { data, error } = await supabase.storage.from(BUCKET_NAME).list();
+      const { data, error } = await client.storage.from(BUCKET_NAME).list();
       if (error) {
         console.error("Error listing images:", error.message);
         return;
@@ -67,7 +71,7 @@
       });
     }
 
-    // Load list when page opens
+    // Load list on startup
     listImages();
   </script>
 </body>
