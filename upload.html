@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Attendee Face</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h1>Upload Attendee Face</h1>
+
+  <input type="text" id="nameInput" placeholder="Enter Name" />
+  <input type="file" id="fileInput" />
+  <button onclick="uploadFace()">Upload</button>
+
+  <script>
+    const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
+    const SUPABASE_KEY = "YOUR_ANON_KEY_HERE"; // replace with your anon key
+    const BUCKET_NAME = "images";
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function uploadFace() {
+      const name = document.getElementById("nameInput").value.trim();
+      const fileInput = document.getElementById("fileInput");
+
+      if (!name) { alert("Enter a name"); return; }
+      if (fileInput.files.length === 0) { alert("Select a file"); return; }
+
+      const file = fileInput.files[0];
+      const fileName = `${Date.now()}_${file.name}`; // keep unique names
+
+      // 1️⃣ Upload image to bucket
+      let { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, file);
+
+      if (uploadError) { alert("Upload failed: " + uploadError.message); return; }
+
+      // 2️⃣ Get public URL of uploaded image
+      const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
+      const imageUrl = data.publicUrl;
+
+      // 3️⃣ Insert attendee into table
+      let { error: insertError } = await supabase
+        .from("attendees")
+        .insert([
+          { name: name, image_url: imageUrl, status: "Pending" }
+        ]);
+
+      if (insertError) { alert("Failed to insert attendee: " + insertError.message); return; }
+
+      alert("Attendee uploaded successfully!");
+      fileInput.value = ""; // reset file input
+      document.getElementById("nameInput").value = ""; // reset name input
+    }
+  </script>
+</body>
+</html>
