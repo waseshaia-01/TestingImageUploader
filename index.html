@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Uploader</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h1 { color: #333; }
+    input { margin: 10px 0; }
+    ul { margin-top: 20px; }
+    li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Upload Image to Supabase</h1>
+  <input type="file" id="fileInput" />
+  <button onclick="uploadImage()">Upload</button>
+
+  <h2>Uploaded Images</h2>
+  <ul id="imageList"></ul>
+
+  <script>
+    // 🔑 Replace with your own values from Supabase
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_KEY = "YOUR_ANON_KEY";
+    const BUCKET_NAME = "images"; // must match your bucket name
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function uploadImage() {
+      const fileInput = document.getElementById("fileInput");
+      if (fileInput.files.length === 0) {
+        alert("Please select a file.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const fileName = `${Date.now()}_${file.name}`;
+
+      let { error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, file);
+
+      if (error) {
+        alert("Upload failed: " + error.message);
+      } else {
+        alert("Upload successful!");
+        listImages();
+      }
+    }
+
+    async function listImages() {
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).list();
+      if (error) {
+        console.error("Error listing images:", error.message);
+        return;
+      }
+
+      const listEl = document.getElementById("imageList");
+      listEl.innerHTML = "";
+      data.forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = file.name;
+        listEl.appendChild(li);
+      });
+    }
+
+    // Load list when page opens
+    listImages();
+  </script>
+</body>
+</html>
