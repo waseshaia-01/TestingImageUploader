@@ -1,84 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Uploader</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Scanner</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    h1 { color: #333; }
-    input { margin: 10px 0; }
-    button { padding: 6px 12px; cursor: pointer; }
-    ul { margin-top: 20px; }
-    li { margin: 5px 0; }
+    body { font-family: Arial; text-align:center; margin:20px; }
+    video { border: 1px solid #333; }
+    button { margin-top: 10px; padding:6px 12px; cursor:pointer; }
+    ul { list-style:none; padding:0; margin-top:10px; }
+    li { margin:5px 0; }
   </style>
 </head>
 <body>
-  <h1>Upload Image to Supabase</h1>
-  <input type="file" id="fileInput" />
-  <button onclick="uploadImage()">Upload</button>
-
-  <h2>Uploaded Images</h2>
-  <ul id="imageList"></ul>
+  <h1>Face Scanner</h1>
+  <video id="video" width="320" height="240" autoplay muted></video>
+  <ul id="attendeeList"></ul>
+  <button onclick="goToDashboard()">Go to Dashboard</button>
 
   <script>
-    // 🔑 Your Supabase credentials
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const BUCKET_NAME = "images";
+    const SUPABASE_KEY = "YOUR_ANON_KEY";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ✅ Correct: assign to `client`
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let labeledDescriptors = [];
 
-    // Upload file
-    async function uploadImage() {
-      const fileInput = document.getElementById("fileInput");
-      if (fileInput.files.length === 0) {
-        alert("Please select a file.");
-        return;
+    function goToDashboard() { window.location.href = "dashboard.html"; }
+
+    async function loadAttendees() {
+      const { data: attendees, error } = await supabase.from("attendees").select("*");
+      if (error) return console.error(error);
+
+      labeledDescriptors = [];
+      for (const a of attendees) {
+        const img = await faceapi.fetchImage(a.image_url);
+        const detection = await faceapi.detectSingleFace(img)
+                                    .withFaceLandmarks()
+                                    .withFaceDescriptor();
+        if(detection) labeledDescriptors.push({id:a.id, name:a.name, descriptor:detection.descriptor});
       }
 
-      const file = fileInput.files[0];
-      const fileName = `${Date.now()}_${file.name}`;
-
-      let { error } = await client.storage
-        .from(BUCKET_NAME)
-        .upload(fileName, file);
-
-      if (error) {
-        alert("Upload failed: " + error.message);
-      } else {
-        alert("Upload successful!");
-        listImages();
-      }
+      displayAttendees(attendees);
     }
 
-    // List files
-    async function listImages() {
-      const { data, error } = await client.storage.from(BUCKET_NAME).list();
-      if (error) {
-        console.error("Error listing images:", error.message);
-        return;
-      }
-    
-      const listEl = document.getElementById("imageList");
-      listEl.innerHTML = "";
-      data.forEach(file => {
+    function displayAttendees(attendees) {
+      const list = document.getElementById("attendeeList");
+      list.innerHTML = "";
+      attendees.forEach(a => {
         const li = document.createElement("li");
-    
-        // ✅ Show original filename only (remove timestamp prefix)
-        const displayName = file.name.includes("_") 
-          ? file.name.split("_").slice(1).join("_") 
-          : file.name;
-    
-        li.textContent = displayName;
-        listEl.appendChild(li);
+        li.id = `attendee-${a.id}`;
+        li.textContent = `${a.name} - ${a.status}`;
+        list.appendChild(li);
       });
     }
 
-    // Load list on startup
-    listImages();
-  </script>
-</body>
-</html>
+    async function startScanner() {
+      const video = document.getElementById("video");
+      navigator.mediaDevices.getUserMedia({video:{}})
+        .then(stream => video.srcObject = stream)
+        .catch(err => console.error(err));
+
+      await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+      await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+      await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+
+      video.addEventListener("play", () => {
+        const canvas = faceapi.createCanvasFromMedia(video);
+        document.body.append(canvas);
+        const displaySize = { width: video.width, height: video.height };
+        faceapi.matchDimensions(canvas, displaySize);
+
+        setInterval(async () => {
+          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                                        .withFaceLandmarks()
+                                        .withFac
