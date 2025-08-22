@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Face Scanner</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <!-- Remove defer attribute to load synchronously -->
+  <!-- Load face-api.js without defer -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
     body { 
@@ -31,6 +31,7 @@
       border: 2px solid #3498db; 
       border-radius: 5px;
       margin-bottom: 20px;
+      background: #000;
     }
     button { 
       margin: 10px; 
@@ -45,6 +46,10 @@
     }
     button:hover {
       background-color: #2980b9;
+    }
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
     }
     ul { 
       list-style: none; 
@@ -80,17 +85,33 @@
       position: relative;
       display: inline-block;
     }
-    #canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
     .instructions {
       background: #e8f4fc;
       padding: 15px;
       border-radius: 5px;
       margin: 20px 0;
       text-align: left;
+    }
+    .status-message {
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .status-loading {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
   </style>
 </head>
@@ -112,9 +133,11 @@
       <video id="video" width="400" height="300" autoplay muted></video>
     </div>
     
+    <div id="statusMessage" class="status-message"></div>
+    
     <div>
-      <button onclick="startScanner()">Start Scanner</button>
-      <button onclick="stopScanner()">Stop Scanner</button>
+      <button id="startButton" onclick="startScanner()">Start Scanner</button>
+      <button id="stopButton" onclick="stopScanner()" disabled>Stop Scanner</button>
     </div>
     
     <h2>Attendees</h2>
@@ -131,7 +154,6 @@
   <script>
     // Initialize Supabase client
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-    // FIXED THE MALFORMED KEY
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -139,6 +161,17 @@
     let scanInterval;
     let videoStream;
     let modelsLoaded = false;
+
+    function showStatus(message, type = 'loading') {
+      const statusElement = document.getElementById('statusMessage');
+      statusElement.textContent = message;
+      statusElement.className = `status-message status-${type}`;
+      statusElement.style.display = 'block';
+    }
+
+    function hideStatus() {
+      document.getElementById('statusMessage').style.display = 'none';
+    }
 
     function goToUpload() { 
       window.location.href = "upload.html"; 
@@ -211,25 +244,38 @@
 
     async function loadModels() {
       try {
+        showStatus("Loading face recognition models...", "loading");
+        
         // Load face-api models
         await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
         await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
         await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
+        
         modelsLoaded = true;
+        showStatus("Models loaded successfully!", "success");
+        setTimeout(hideStatus, 2000);
         return true;
       } catch (error) {
         console.error("Error loading models:", error);
-        alert("Error loading face recognition models: " + error.message);
+        showStatus("Error loading face recognition models. Check console for details.", "error");
         return false;
       }
     }
 
     async function startScanner() {
       try {
+        // Update button states
+        document.getElementById('startButton').disabled = true;
+        document.getElementById('stopButton').disabled = false;
+        
         // Load models if not already loaded
         if (!modelsLoaded) {
           const success = await loadModels();
-          if (!success) return;
+          if (!success) {
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            return;
+          }
         }
         
         const video = document.getElementById("video");
@@ -240,8 +286,10 @@
         }
         
         // Get new stream
+        showStatus("Accessing camera...", "loading");
         videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
         video.srcObject = videoStream;
+        hideStatus();
         
         // Create canvas for face detection overlay
         const canvas = faceapi.createCanvasFromMedia(video);
@@ -289,7 +337,11 @@
         
       } catch (err) {
         console.error("Error starting scanner:", err);
-        alert("Error accessing camera: " + err.message);
+        showStatus("Error accessing camera: " + err.message, "error");
+        
+        // Re-enable start button
+        document.getElementById('startButton').disabled = false;
+        document.getElementById('stopButton').disabled = true;
       }
     }
 
@@ -314,6 +366,13 @@
       if (canvas) {
         canvas.remove();
       }
+      
+      // Update button states
+      document.getElementById('startButton').disabled = false;
+      document.getElementById('stopButton').disabled = true;
+      
+      showStatus("Scanner stopped", "success");
+      setTimeout(hideStatus, 2000);
     }
 
     function findBestMatch(queryDescriptor) {
