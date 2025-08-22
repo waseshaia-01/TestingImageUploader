@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Scanner - Enhanced Feedback</title>
+  <title>Face Recognition Troubleshooter</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
@@ -19,14 +19,12 @@
       color: #333;
       min-height: 100vh;
       padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
     
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       width: 100%;
+      margin: 0 auto;
       background: white;
       border-radius: 15px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -49,6 +47,36 @@
       padding: 25px;
     }
     
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 5px 5px 0 0;
+      margin-right: 5px;
+    }
+    
+    .tab.active {
+      background: white;
+      border-bottom: 1px solid white;
+      margin-bottom: -1px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
     .scanner-container {
       position: relative;
       display: flex;
@@ -56,118 +84,22 @@
       margin-bottom: 20px;
     }
     
-    video { 
+    video, .test-image { 
       border: 2px solid #3498db; 
       border-radius: 8px;
       background: #000;
       max-width: 100%;
       height: auto;
-      transition: all 0.3s ease;
     }
     
-    .scanning-active video {
-      border: 2px solid #2ecc71;
-      box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-    }
-    
-    .detection-active video {
-      border: 2px solid #f39c12;
-      box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
-    }
-    
-    .scanner-container canvas {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: none;
-    }
-    
-    .scan-indicator {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      display: none;
-      z-index: 10;
-      animation: pulse 1.5s infinite;
-    }
-    
-    .scanning-indicator {
-      background: rgba(46, 204, 113, 0.9);
-    }
-    
-    .detection-indicator {
-      background: rgba(243, 156, 18, 0.9);
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 0.7; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7; }
-    }
-    
-    .scanning-active .scanning-indicator {
-      display: block;
-    }
-    
-    .detection-active .detection-indicator {
-      display: block;
-    }
-    
-    .scan-animation {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 2px solid #2ecc71;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(46, 204, 113, 0.7);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    
-    .detection-animation {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 2px solid #f39c12;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(243, 156, 18, 0.7);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    
-    .scanning-active .scan-animation {
-      opacity: 1;
-      animation: scan 2s infinite;
-    }
-    
-    .detection-active .detection-animation {
-      opacity: 1;
-      animation: detection 2s infinite;
-    }
-    
-    @keyframes scan {
-      0% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.7); }
-      50% { box-shadow: 0 0 25px rgba(46, 204, 113, 0.9); }
-      100% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.7); }
-    }
-    
-    @keyframes detection {
-      0% { box-shadow: 0 0 10px rgba(243, 156, 18, 0.7); }
-      50% { box-shadow: 0 0 25px rgba(243, 156, 18, 0.9); }
-      100% { box-shadow: 0 0 10px rgba(243, 156, 18, 0.7); }
+    .test-image {
+      background: #f0f0f0;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-style: italic;
     }
     
     .status-message {
@@ -201,196 +133,197 @@
       border: 1px solid #ffeeba;
     }
     
-    .progress-container {
+    .test-results {
       margin: 20px 0;
-      background: #f0f0f0;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    
-    .progress-bar {
-      height: 20px;
-      background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
-      width: 0%;
-      transition: width 0.5s ease;
-      text-align: center;
-      color: white;
-      font-weight: bold;
-    }
-    
-    .model-loading-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 5px;
-    }
-    
-    .attendees-section {
-      margin-top: 25px;
-    }
-    
-    .attendees-section h2 {
-      color: #2c3e50;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    
-    #attendeeList {
-      list-style: none;
-      padding: 0;
-      margin: 0 auto;
-      max-width: 500px;
-    }
-    
-    #attendeeList li {
-      background: #f8f9fa;
       padding: 15px;
-      margin-bottom: 10px;
+      border: 1px solid #ddd;
       border-radius: 8px;
+      background: #f9f9f9;
+    }
+    
+    .test-result-item {
+      margin: 10px 0;
+      padding: 10px;
+      border-left: 4px solid #ddd;
+    }
+    
+    .test-result-item.success {
+      border-left-color: #28a745;
+      background: #e8f5e9;
+    }
+    
+    .test-result-item.error {
+      border-left-color: #dc3545;
+      background: #fdecea;
+    }
+    
+    .test-result-item.warning {
+      border-left-color: #ffc107;
+      background: #fff9e6;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #2980b9;
+    }
+    
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    
+    .comparison-container {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.3s ease;
-    }
-    
-    #attendeeList li.recognized {
-      background: #e8f5e8;
-      transform: scale(1.02);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .status-pending {
-      color: #e74c3c;
-      font-weight: bold;
-    }
-    
-    .status-checked {
-      color: #27ae60;
-      font-weight: bold;
-    }
-    
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 25px;
+      justify-content: space-around;
+      margin: 20px 0;
       flex-wrap: wrap;
     }
     
-    .nav-buttons button {
-      background: #2c3e50;
-      min-width: 200px;
-      padding: 12px 20px;
-      cursor: pointer;
-      color: white;
-      border: none;
+    .comparison-item {
+      flex: 1;
+      min-width: 300px;
+      margin: 10px;
+      text-align: center;
+    }
+    
+    .comparison-item img {
+      max-width: 100%;
       border-radius: 8px;
-      font-size: 16px;
-      transition: all 0.3s;
+      border: 1px solid #ddd;
     }
     
-    .nav-buttons button:hover {
-      background: #1a252f;
-      transform: translateY(-2px);
-    }
-    
-    .detection-counter {
-      text-align: center;
-      margin: 10px 0;
-      font-size: 14px;
-      color: #7f8c8d;
-    }
-    
-    .last-detection {
-      text-align: center;
-      margin: 5px 0;
-      font-size: 14px;
-      color: #7f8c8d;
-    }
-    
-    .recognition-feedback {
-      text-align: center;
-      margin: 15px 0;
+    .debug-info {
+      background: #2c3e50;
+      color: white;
       padding: 15px;
       border-radius: 8px;
-      background: #f8f9fa;
-      display: none;
+      margin: 20px 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
     }
     
-    .unknown-face {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
+    .distance-display {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin: 15px 0;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 5px;
     }
     
-    @media (max-width: 600px) {
-      .nav-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .nav-buttons button {
-        width: 100%;
-        max-width: 300px;
-      }
-      
-      video {
-        width: 100%;
-        height: auto;
-      }
+    .threshold-info {
+      text-align: center;
+      margin: 10px 0;
+      color: #7f8c8d;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Face Scanner</h1>
-      <p>Advanced facial recognition attendance system</p>
+      <h1>Face Recognition Troubleshooter</h1>
+      <p>Diagnose issues with your face recognition system</p>
     </header>
     
     <div class="content">
-      <div class="scanner-container" id="scannerContainer">
-        <video id="video" width="400" height="300" autoplay muted playsinline></video>
-        <div class="scan-animation"></div>
-        <div class="detection-animation"></div>
-        <div class="scan-indicator scanning-indicator">Scanning Active</div>
-        <div class="scan-indicator detection-indicator">Face Detected - Processing</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="scanner">Live Scanner</div>
+        <div class="tab" data-tab="database">Database Check</div>
+        <div class="tab" data-tab="comparison">Image Comparison</div>
+        <div class="tab" data-tab="debug">Debug Info</div>
       </div>
       
-      <div id="statusMessage" class="status-message status-loading">
-        Initializing face recognition system...
+      <div class="tab-content active" id="scanner">
+        <h2>Live Face Scanner Test</h2>
+        <div class="scanner-container">
+          <video id="video" width="400" height="300" autoplay muted playsinline></video>
+        </div>
+        
+        <div id="statusMessage" class="status-message status-loading">
+          Initializing camera and models...
+        </div>
+        
+        <div class="test-results">
+          <h3>Test Results</h3>
+          <div id="testResults"></div>
+        </div>
+        
+        <div style="text-align: center;">
+          <button id="startTest">Start Test</button>
+          <button id="stopTest" disabled>Stop Test</button>
+        </div>
       </div>
       
-      <div id="recognitionFeedback" class="recognition-feedback">
-        Face detected but not recognized. Please upload your face image if you haven't already.
+      <div class="tab-content" id="database">
+        <h2>Database Contents</h2>
+        <div class="status-message status-loading" id="dbStatus">
+          Loading attendees from database...
+        </div>
+        
+        <div id="attendeeList"></div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+          <button id="refreshDb">Refresh Database</button>
+        </div>
       </div>
       
-      <div id="modelLoadingInfo" class="model-loading-info">
-        <span>Loading Models:</span>
-        <span id="modelProgressText">0%</span>
+      <div class="tab-content" id="comparison">
+        <h2>Image Comparison Test</h2>
+        <p>This test compares your uploaded image with what the camera sees.</p>
+        
+        <div class="comparison-container">
+          <div class="comparison-item">
+            <h3>Your Uploaded Image</h3>
+            <div id="uploadedImageContainer" class="test-image">
+              No image loaded yet
+            </div>
+          </div>
+          
+          <div class="comparison-item">
+            <h3>Current Camera View</h3>
+            <div id="cameraImageContainer" class="test-image">
+              Camera not active
+            </div>
+          </div>
+        </div>
+        
+        <div class="distance-display" id="distanceDisplay">
+          Distance: N/A
+        </div>
+        
+        <div class="threshold-info">
+          Recognition threshold: &lt; 0.6 (lower is better)
+        </div>
+        
+        <div style="text-align: center;">
+          <button id="captureTest">Capture & Compare</button>
+          <button id="runComparison" disabled>Run Comparison</button>
+        </div>
       </div>
       
-      <div class="progress-container">
-        <div id="progressBar" class="progress-bar">0%</div>
-      </div>
-      
-      <div id="detectionCounter" class="detection-counter">
-        Faces detected: 0
-      </div>
-      
-      <div id="lastDetection" class="last-detection">
-        Last recognition: None
-      </div>
-      
-      <div class="attendees-section">
-        <h2>Attendees</h2>
-        <ul id="attendeeList">
-          <li>Loading attendees...</li>
-        </ul>
-      </div>
-      
-      <div class="nav-buttons">
-        <button onclick="goToUpload()">Upload New Attendee</button>
-        <button onclick="goToDashboard()">View Dashboard</button>
+      <div class="tab-content" id="debug">
+        <h2>Debug Information</h2>
+        <div class="debug-info" id="debugInfo">
+          Debug information will appear here...
+        </div>
+        
+        <div style="text-align: center;">
+          <button id="refreshDebug">Refresh Debug Info</button>
+          <button id="runDiagnostics">Run Full Diagnostics</button>
+        </div>
       </div>
     </div>
   </div>
@@ -405,154 +338,101 @@
     let scanInterval;
     let videoStream;
     let modelsLoaded = false;
-    let detectionCount = 0;
-    let lastRecognized = null;
-    let lastDetectionTime = 0;
+    let uploadedImageDescriptor = null;
+    let currentCameraDescriptor = null;
 
     // DOM elements
     const statusMessage = document.getElementById('statusMessage');
     const video = document.getElementById('video');
-    const progressBar = document.getElementById('progressBar');
-    const modelProgressText = document.getElementById('modelProgressText');
-    const scannerContainer = document.getElementById('scannerContainer');
-    const detectionCounter = document.getElementById('detectionCounter');
-    const lastDetection = document.getElementById('lastDetection');
-    const recognitionFeedback = document.getElementById('recognitionFeedback');
+    const testResults = document.getElementById('testResults');
+    const debugInfo = document.getElementById('debugInfo');
+    const dbStatus = document.getElementById('dbStatus');
+    const attendeeList = document.getElementById('attendeeList');
+    const uploadedImageContainer = document.getElementById('uploadedImageContainer');
+    const cameraImageContainer = document.getElementById('cameraImageContainer');
+    const distanceDisplay = document.getElementById('distanceDisplay');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        
+        // Load content for the tab if needed
+        if (tabId === 'database') {
+          loadDatabaseContents();
+        }
+      });
+    });
 
     function showStatus(message, type = 'loading') {
       statusMessage.textContent = message;
       statusMessage.className = `status-message status-${type}`;
-      statusMessage.style.display = 'block';
     }
 
-    function showRecognitionFeedback(show, isUnknown = false) {
-      if (show) {
-        recognitionFeedback.style.display = 'block';
-        recognitionFeedback.className = isUnknown ? 
-          'recognition-feedback unknown-face' : 
-          'recognition-feedback';
-      } else {
-        recognitionFeedback.style.display = 'none';
-      }
+    function addTestResult(message, type = 'info') {
+      const resultItem = document.createElement('div');
+      resultItem.className = `test-result-item ${type}`;
+      resultItem.textContent = message;
+      testResults.appendChild(resultItem);
     }
 
-    function updateProgress(percent, modelName = '') {
-      progressBar.style.width = percent + '%';
-      progressBar.textContent = percent + '%';
-      modelProgressText.textContent = `${percent}%${modelName ? ' - ' + modelName : ''}`;
+    function updateDebugInfo(message) {
+      debugInfo.textContent = message;
     }
 
-    function setScanningUI(active) {
-      if (active) {
-        scannerContainer.classList.add('scanning-active');
-        scannerContainer.classList.remove('detection-active');
-        showStatus("Scanner active. Looking for faces...", "success");
-        showRecognitionFeedback(false);
-      } else {
-        scannerContainer.classList.remove('scanning-active');
-        scannerContainer.classList.remove('detection-active');
-      }
-    }
-
-    function setDetectionUI(active) {
-      if (active) {
-        scannerContainer.classList.remove('scanning-active');
-        scannerContainer.classList.add('detection-active');
-        showStatus("Face detected! Processing...", "warning");
-      } else {
-        scannerContainer.classList.remove('detection-active');
-        setScanningUI(true);
-      }
-    }
-
-    function updateDetectionCounter() {
-      detectionCount++;
-      detectionCounter.textContent = `Faces detected: ${detectionCount}`;
-    }
-
-    function updateLastRecognition(name) {
-      lastRecognized = name;
-      const now = new Date();
-      const timeString = now.toLocaleTimeString();
-      lastDetection.textContent = `Last recognition: ${name} at ${timeString}`;
-    }
-
-    function goToUpload() { 
-      window.location.href = "upload.html"; 
-    }
-    
-    function goToDashboard() { 
-      window.location.href = "dashboard.html"; 
-    }
-
-    async function loadAttendees() {
+    async function loadDatabaseContents() {
+      dbStatus.textContent = "Loading attendees from database...";
+      dbStatus.className = "status-message status-loading";
+      
       try {
         const { data: attendees, error } = await supabase.from("attendees").select("*");
+        
         if (error) {
-          console.error("Error loading attendees:", error);
-          document.getElementById("attendeeList").innerHTML = "<li>Error loading attendees</li>";
+          dbStatus.textContent = "Error loading attendees: " + error.message;
+          dbStatus.className = "status-message status-error";
           return;
         }
-
-        labeledDescriptors = [];
         
         if (attendees.length === 0) {
-          document.getElementById("attendeeList").innerHTML = "<li>No attendees found</li>";
+          dbStatus.textContent = "No attendees found in database";
+          dbStatus.className = "status-message status-warning";
+          attendeeList.innerHTML = "<p>No attendees found. Please upload faces using the Upload page.</p>";
           return;
         }
-
-        // Display attendees immediately
-        displayAttendees(attendees);
         
-        // Load face descriptors in background
-        loadFaceDescriptors(attendees);
+        dbStatus.textContent = `Found ${attendees.length} attendees in database`;
+        dbStatus.className = "status-message status-success";
+        
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">';
+        attendees.forEach(a => {
+          html += `
+            <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+              <img src="${a.image_url}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px;">
+              <div style="margin-top: 10px;">
+                <strong>${a.name}</strong><br>
+                Status: <span class="${a.status === 'Checked' ? 'status-checked' : 'status-pending'}">${a.status}</span>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        
+        attendeeList.innerHTML = html;
+        
       } catch (err) {
-        console.error("Unexpected error in loadAttendees:", err);
-        document.getElementById("attendeeList").innerHTML = "<li>Error loading attendees</li>";
+        dbStatus.textContent = "Unexpected error: " + err.message;
+        dbStatus.className = "status-message status-error";
+        console.error(err);
       }
-    }
-
-    async function loadFaceDescriptors(attendees) {
-      for (const a of attendees) {
-        try {
-          const img = await faceapi.fetchImage(a.image_url);
-          const detection = await faceapi.detectSingleFace(img)
-                                      .withFaceLandmarks()
-                                      .withFaceDescriptor();
-          if (detection) {
-            labeledDescriptors.push({
-              id: a.id, 
-              name: a.name, 
-              descriptor: detection.descriptor
-            });
-          }
-        } catch (imgError) {
-          console.error(`Error processing image for ${a.name}:`, imgError);
-        }
-      }
-      
-      console.log(`Loaded ${labeledDescriptors.length} face descriptors`);
-    }
-
-    function displayAttendees(attendees) {
-      const list = document.getElementById("attendeeList");
-      list.innerHTML = "";
-      
-      attendees.forEach(a => {
-        const li = document.createElement("li");
-        li.id = `attendee-${a.id}`;
-        
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = a.name;
-        
-        const statusSpan = document.createElement("span");
-        statusSpan.textContent = a.status;
-        statusSpan.className = a.status === "Checked" ? "status-checked" : "status-pending";
-        
-        li.appendChild(nameSpan);
-        li.appendChild(statusSpan);
-        list.appendChild(li);
-      });
     }
 
     async function loadModels() {
@@ -569,41 +449,28 @@
         
         for (let i = 0; i < models.length; i++) {
           const model = models[i];
-          updateProgress(Math.round((i / models.length) * 100), `Loading ${model.name}`);
           
           try {
             await model.net.loadFromUri(modelsPath);
-            updateProgress(Math.round(((i + 1) / models.length) * 100), `${model.name} Loaded`);
-            
-            // Add a small delay to show progress
-            await new Promise(resolve => setTimeout(resolve, 300));
+            addTestResult(`${model.name} loaded successfully`, 'success');
           } catch (err) {
-            console.error(`Error loading ${model.name}:`, err);
+            addTestResult(`Error loading ${model.name}: ${err.message}`, 'error');
             throw new Error(`Failed to load ${model.name}`);
           }
         }
         
         modelsLoaded = true;
-        showStatus("All models loaded successfully! Starting camera...", "success");
-        updateProgress(100, "All Models Loaded");
+        showStatus("All models loaded successfully!", "success");
         return true;
       } catch (error) {
-        console.error("Error loading models:", error);
-        showStatus("Error loading face recognition models. Check console for details.", "error");
+        showStatus("Error loading face recognition models", "error");
+        addTestResult("Model loading failed: " + error.message, 'error');
         return false;
       }
     }
 
-    async function startScanner() {
+    async function startCamera() {
       try {
-        // Load models if not already loaded
-        if (!modelsLoaded) {
-          const success = await loadModels();
-          if (!success) {
-            return;
-          }
-        }
-        
         // Stop any existing stream
         if (videoStream) {
           videoStream.getTracks().forEach(track => track.stop());
@@ -630,93 +497,68 @@
             };
           });
           
-          // Enable scanning UI
-          setScanningUI(true);
+          showStatus("Camera ready. Face detection active.", "success");
+          return true;
         } catch (cameraError) {
-          console.error("Camera access error:", cameraError);
           showStatus(`Camera error: ${cameraError.message}`, "error");
-          return;
+          addTestResult("Camera access failed: " + cameraError.message, 'error');
+          return false;
         }
-        
-        // Create canvas for face detection overlay
-        const existingCanvas = document.querySelector('canvas');
-        if (existingCanvas) {
-          existingCanvas.remove();
-        }
-        
-        const canvas = faceapi.createCanvasFromMedia(video);
-        document.querySelector('.scanner-container').append(canvas);
-        const displaySize = { width: video.width, height: video.height };
-        faceapi.matchDimensions(canvas, displaySize);
-        
-        // Clear any existing interval
-        if (scanInterval) {
-          clearInterval(scanInterval);
-        }
-        
-        // Set up scanning interval
-        scanInterval = setInterval(async () => {
-          try {
-            if (labeledDescriptors.length === 0) return;
-            
-            const detections = await faceapi.detectAllFaces(
-              video, 
-              new faceapi.TinyFaceDetectorOptions()
-            ).withFaceLandmarks().withFaceDescriptors();
-            
-            if (detections && detections.length > 0) {
-              updateDetectionCounter();
-              const resizedDetections = faceapi.resizeResults(detections, displaySize);
-              
-              // Clear canvas
-              canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-              
-              // Draw detections
-              faceapi.draw.drawDetections(canvas, resizedDetections);
-              faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-              
-              // Show detection UI
-              setDetectionUI(true);
-              lastDetectionTime = Date.now();
-              
-              // Check for matches
-              let recognized = false;
-              for (const detection of resizedDetections) {
-                const descriptor = detection.descriptor;
-                const bestMatch = findBestMatch(descriptor);
-                
-                if (bestMatch) {
-                  recognized = true;
-                  updateLastRecognition(bestMatch.name);
-                  updateStatus(bestMatch.id);
-                  showRecognitionFeedback(false);
-                }
-              }
-              
-              // Show message if face detected but not recognized
-              if (!recognized) {
-                showRecognitionFeedback(true, true);
-              }
-              
-              // Return to scanning UI after a delay
-              setTimeout(() => {
-                if (Date.now() - lastDetectionTime > 1500) {
-                  setScanningUI(true);
-                }
-              }, 2000);
-            } else {
-              setScanningUI(true);
-              showRecognitionFeedback(false);
-            }
-          } catch (detectionError) {
-            console.error("Error during face detection:", detectionError);
-            setScanningUI(true);
-          }
-        }, 1500); // Scan every 1.5 seconds
-        
       } catch (err) {
-        console.error("Error starting scanner:", err);
+        console.error("Error starting camera:", err);
         showStatus("Error: " + err.message, "error");
+        return false;
+      }
+    }
+
+    async function testFaceRecognition() {
+      if (!modelsLoaded) {
+        addTestResult("Models not loaded yet", "warning");
+        return;
+      }
+      
+      try {
+        addTestResult("Testing face detection...", "info");
+        
+        const detections = await faceapi.detectAllFaces(
+          video, 
+          new faceapi.TinyFaceDetectorOptions()
+        ).withFaceLandmarks().withFaceDescriptors();
+        
+        if (detections && detections.length > 0) {
+          addTestResult(`Detected ${detections.length} face(s)`, "success");
+          
+          // Check if we have any descriptors to compare against
+          if (labeledDescriptors.length === 0) {
+            addTestResult("No face descriptors loaded from database", "warning");
+            return;
+          }
+          
+          // Check for matches
+          let recognized = false;
+          for (const detection of detections) {
+            const descriptor = detection.descriptor;
+            const bestMatch = findBestMatch(descriptor);
+            
+            if (bestMatch) {
+              addTestResult(`Recognized: ${bestMatch.name} (distance: ${bestMatch.distance.toFixed(4)})`, "success");
+              recognized = true;
+            }
+          }
+          
+          if (!recognized) {
+            addTestResult("Face detected but not recognized. Possible reasons:", "warning");
+            addTestResult("- Your face may not be in the database", "warning");
+            addTestResult("- Lighting conditions may be different", "warning");
+            addTestResult("- Face angle or expression may be different", "warning");
+            addTestResult("- Distance threshold may be too strict", "warning");
+          }
+        } else {
+          addTestResult("No faces detected. Make sure your face is clearly visible.", "warning");
+        }
+      } catch (detectionError) {
+        addTestResult("Face detection error: " + detectionError.message, "error");
+        console.error(detectionError);
       }
     }
 
@@ -730,53 +572,194 @@
         const distance = faceapi.euclideanDistance(queryDescriptor, attendee.descriptor);
         if (distance < 0.6 && distance < minDistance) {
           minDistance = distance;
-          matched = attendee;
+          matched = { ...attendee, distance };
         }
       }
 
       return matched;
     }
 
-    async function updateStatus(id) {
+    async function captureCameraImage() {
+      if (!videoStream) {
+        alert("Please start the camera first");
+        return;
+      }
+      
+      // Create a canvas to capture the video frame
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Display the captured image
+      cameraImageContainer.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      cameraImageContainer.appendChild(img);
+      
+      // Extract descriptor from the captured image
       try {
-        // Update in database
-        const { error } = await supabase
-          .from("attendees")
-          .update({ status: "Checked" })
-          .eq("id", id);
+        const detection = await faceapi.detectSingleFace(img)
+                                    .withFaceLandmarks()
+                                    .withFaceDescriptor();
+        if (detection) {
+          currentCameraDescriptor = detection.descriptor;
+          addTestResult("Camera image captured and processed", "success");
+          
+          // If we have an uploaded image descriptor, compare them
+          if (uploadedImageDescriptor) {
+            compareDescriptors();
+          }
+        } else {
+          addTestResult("No face found in captured image", "warning");
+        }
+      } catch (error) {
+        addTestResult("Error processing captured image: " + error.message, "error");
+      }
+    }
 
-        if (error) {
-          console.error("Error updating status:", error);
+    async function compareDescriptors() {
+      if (!uploadedImageDescriptor || !currentCameraDescriptor) {
+        addTestResult("Need both uploaded image and camera image descriptors", "warning");
+        return;
+      }
+      
+      const distance = faceapi.euclideanDistance(uploadedImageDescriptor, currentCameraDescriptor);
+      distanceDisplay.textContent = `Distance: ${distance.toFixed(4)}`;
+      
+      if (distance < 0.6) {
+        distanceDisplay.style.color = '#28a745';
+        addTestResult(`Images match! Distance: ${distance.toFixed(4)} (below 0.6 threshold)`, "success");
+      } else {
+        distanceDisplay.style.color = '#dc3545';
+        addTestResult(`Images don't match. Distance: ${distance.toFixed(4)} (above 0.6 threshold)`, "error");
+        addTestResult("This could explain why you're not being recognized", "warning");
+      }
+    }
+
+    async function loadUploadedImageDescriptor() {
+      // For this test, we'll use the first attendee's image
+      try {
+        const { data: attendees, error } = await supabase.from("attendees").select("*");
+        if (error || !attendees || attendees.length === 0) {
+          addTestResult("No attendees found in database", "warning");
           return;
         }
-
-        // Update in page with visual feedback
-        const li = document.getElementById(`attendee-${id}`);
-        if (li) {
-          const statusSpan = li.querySelector('span:last-child');
-          if (statusSpan) {
-            statusSpan.textContent = "Checked";
-            statusSpan.className = "status-checked";
-            
-            // Add visual recognition feedback
-            li.classList.add('recognized');
-            setTimeout(() => {
-              li.classList.remove('recognized');
-            }, 2000);
+        
+        // Use the first attendee's image
+        const attendee = attendees[0];
+        uploadedImageContainer.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = attendee.image_url;
+        uploadedImageContainer.appendChild(img);
+        
+        // Extract descriptor
+        const detection = await faceapi.detectSingleFace(img)
+                                    .withFaceLandmarks()
+                                    .withFaceDescriptor();
+        if (detection) {
+          uploadedImageDescriptor = detection.descriptor;
+          addTestResult(`Loaded descriptor for: ${attendee.name}`, "success");
+          
+          // If we have a camera descriptor, compare them
+          if (currentCameraDescriptor) {
+            compareDescriptors();
           }
+        } else {
+          addTestResult("No face found in uploaded image", "warning");
         }
-      } catch (err) {
-        console.error("Error in updateStatus:", err);
+      } catch (error) {
+        addTestResult("Error processing uploaded image: " + error.message, "error");
       }
     }
 
     // Initialize when page loads
     window.addEventListener('load', async () => {
-      // Load attendees first
-      await loadAttendees();
+      // Add event listeners to buttons
+      document.getElementById('startTest').addEventListener('click', async () => {
+        document.getElementById('startTest').disabled = true;
+        document.getElementById('stopTest').disabled = false;
+        
+        testResults.innerHTML = '';
+        addTestResult("Starting face recognition test...", "info");
+        
+        // Load models if not already loaded
+        if (!modelsLoaded) {
+          await loadModels();
+        }
+        
+        // Start camera
+        const cameraStarted = await startCamera();
+        if (cameraStarted) {
+          // Run initial test
+          await testFaceRecognition();
+          
+          // Set up periodic testing
+          scanInterval = setInterval(testFaceRecognition, 3000);
+        }
+      });
       
-      // Then start the scanner automatically
-      await startScanner();
+      document.getElementById('stopTest').addEventListener('click', () => {
+        document.getElementById('startTest').disabled = false;
+        document.getElementById('stopTest').disabled = true;
+        
+        if (scanInterval) {
+          clearInterval(scanInterval);
+          scanInterval = null;
+        }
+        
+        if (videoStream) {
+          videoStream.getTracks().forEach(track => track.stop());
+          videoStream = null;
+        }
+        
+        addTestResult("Test stopped", "info");
+      });
+      
+      document.getElementById('refreshDb').addEventListener('click', loadDatabaseContents);
+      document.getElementById('captureTest').addEventListener('click', captureCameraImage);
+      document.getElementById('runComparison').addEventListener('click', compareDescriptors);
+      document.getElementById('refreshDebug').addEventListener('click', () => {
+        updateDebugInfo(`Last updated: ${new Date().toLocaleTimeString()}\nModels loaded: ${modelsLoaded}\nLabeled descriptors: ${labeledDescriptors.length}`);
+      });
+      
+      document.getElementById('runDiagnostics').addEventListener('click', async () => {
+        let debugText = `=== Face Recognition Diagnostics ===\n`;
+        debugText += `Time: ${new Date().toLocaleString()}\n`;
+        debugText += `Models loaded: ${modelsLoaded}\n`;
+        
+        // Test database connection
+        debugText += `\n--- Database Test ---\n`;
+        try {
+          const { data, error } = await supabase.from("attendees").select("count");
+          if (error) {
+            debugText += `Database error: ${error.message}\n`;
+          } else {
+            debugText += `Database connection: OK\n`;
+          }
+        } catch (err) {
+          debugText += `Database exception: ${err.message}\n`;
+        }
+        
+        // Test models
+        debugText += `\n--- Models Test ---\n`;
+        if (modelsLoaded) {
+          debugText += `All models loaded successfully\n`;
+        } else {
+          debugText += `Models not loaded yet\n`;
+        }
+        
+        updateDebugInfo(debugText);
+      });
+      
+      // Load initial data
+      await loadModels();
+      await loadDatabaseContents();
+      await loadUploadedImageDescriptor();
+      
+      // Set up initial debug info
+      updateDebugInfo("System initialized. Click 'Run Full Diagnostics' for detailed information.");
     });
     
     // Clean up when leaving page
