@@ -64,6 +64,14 @@
       height: auto;
     }
     
+    .scanner-container canvas {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    
     .controls {
       display: flex;
       justify-content: center;
@@ -398,10 +406,12 @@
       try {
         showStatus("Loading face recognition models...", "loading");
         
-        // Load face-api models from your GitHub Pages directory
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
+        // Load face-api models with corrected path
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('./models')
+        ]);
         
         modelsLoaded = true;
         showStatus("Models loaded successfully!", "success");
@@ -482,17 +492,17 @@
               new faceapi.TinyFaceDetectorOptions()
             ).withFaceLandmarks().withFaceDescriptors();
             
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            
-            // Clear canvas
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw detections
-            faceapi.draw.drawDetections(canvas, resizedDetections);
-            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-            
-            // Check for matches
-            if (resizedDetections.length > 0) {
+            if (detections && detections.length > 0) {
+              const resizedDetections = faceapi.resizeResults(detections, displaySize);
+              
+              // Clear canvas
+              canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+              
+              // Draw detections
+              faceapi.draw.drawDetections(canvas, resizedDetections);
+              faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+              
+              // Check for matches
               for (const detection of resizedDetections) {
                 const descriptor = detection.descriptor;
                 const bestMatch = findBestMatch(descriptor);
