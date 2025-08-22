@@ -7,74 +7,348 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
-    body { font-family: Arial; text-align:center; margin:20px; }
-    video { border: 1px solid #333; }
-    button { margin-top: 10px; padding:6px 12px; cursor:pointer; }
-    ul { list-style:none; padding:0; margin-top:10px; }
-    li { margin:5px 0; }
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    video { 
+      border: 2px solid #3498db; 
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    button { 
+      margin: 10px; 
+      padding: 10px 20px; 
+      cursor: pointer; 
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    ul { 
+      list-style: none; 
+      padding: 0; 
+      margin-top: 20px;
+      text-align: left;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    li { 
+      margin: 10px 0; 
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .status-pending {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    .status-checked {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .nav-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .scanner-container {
+      position: relative;
+      display: inline-block;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .instructions {
+      background: #e8f4fc;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
-  <h1>Face Scanner</h1>
-  <video id="video" width="320" height="240" autoplay muted></video>
-  <ul id="attendeeList"></ul>
-  <button onclick="goToDashboard()">Go to Dashboard</button>
+  <div class="container">
+    <h1>Face Scanner</h1>
+    
+    <div class="instructions">
+      <h3>How to use:</h3>
+      <ol>
+        <li>Make sure you're in a well-lit environment</li>
+        <li>Allow camera access when prompted</li>
+        <li>Position your face in the frame</li>
+        <li>The system will automatically detect and verify your identity</li>
+      </ol>
+    </div>
+    
+    <div class="scanner-container">
+      <video id="video" width="400" height="300" autoplay muted></video>
+    </div>
+    
+    <div>
+      <button onclick="startScanner()">Start Scanner</button>
+      <button onclick="stopScanner()">Stop Scanner</button>
+    </div>
+    
+    <h2>Attendees</h2>
+    <ul id="attendeeList">
+      <li>Loading attendees...</li>
+    </ul>
+    
+    <div class="nav-buttons">
+      <button onclick="goToUpload()">Upload New Attendee</button>
+      <button onclick="goToDashboard()">View Dashboard</button>
+    </div>
+  </div>
 
   <script>
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const { createClient } = supabase;
-    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJsudXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let labeledDescriptors = [];
+    let scanInterval;
+    let videoStream;
 
-    function goToDashboard() { window.location.href = "dashboard.html"; }
+    function goToUpload() { 
+      window.location.href = "upload.html"; 
+    }
+    
+    function goToDashboard() { 
+      window.location.href = "dashboard.html"; 
+    }
 
     async function loadAttendees() {
-      const { data: attendees, error } = await supabase.from("attendees").select("*");
-      if (error) return console.error(error);
+      try {
+        const { data: attendees, error } = await supabase.from("attendees").select("*");
+        if (error) {
+          console.error("Error loading attendees:", error);
+          document.getElementById("attendeeList").innerHTML = "<li>Error loading attendees</li>";
+          return;
+        }
 
-      labeledDescriptors = [];
-      for (const a of attendees) {
-        const img = await faceapi.fetchImage(a.image_url);
-        const detection = await faceapi.detectSingleFace(img)
-                                    .withFaceLandmarks()
-                                    .withFaceDescriptor();
-        if(detection) labeledDescriptors.push({id:a.id, name:a.name, descriptor:detection.descriptor});
+        labeledDescriptors = [];
+        
+        if (attendees.length === 0) {
+          document.getElementById("attendeeList").innerHTML = "<li>No attendees found</li>";
+          return;
+        }
+
+        for (const a of attendees) {
+          try {
+            const img = await faceapi.fetchImage(a.image_url);
+            const detection = await faceapi.detectSingleFace(img)
+                                        .withFaceLandmarks()
+                                        .withFaceDescriptor();
+            if (detection) {
+              labeledDescriptors.push({
+                id: a.id, 
+                name: a.name, 
+                descriptor: detection.descriptor
+              });
+            }
+          } catch (imgError) {
+            console.error(`Error processing image for ${a.name}:`, imgError);
+          }
+        }
+
+        displayAttendees(attendees);
+      } catch (err) {
+        console.error("Unexpected error in loadAttendees:", err);
       }
-
-      displayAttendees(attendees);
     }
 
     function displayAttendees(attendees) {
       const list = document.getElementById("attendeeList");
       list.innerHTML = "";
+      
       attendees.forEach(a => {
         const li = document.createElement("li");
         li.id = `attendee-${a.id}`;
-        li.textContent = `${a.name} - ${a.status}`;
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = a.name;
+        
+        const statusSpan = document.createElement("span");
+        statusSpan.textContent = a.status;
+        statusSpan.className = a.status === "Checked" ? "status-checked" : "status-pending";
+        
+        li.appendChild(nameSpan);
+        li.appendChild(statusSpan);
         list.appendChild(li);
       });
     }
 
     async function startScanner() {
-      const video = document.getElementById("video");
-      navigator.mediaDevices.getUserMedia({video:{}})
-        .then(stream => video.srcObject = stream)
-        .catch(err => console.error(err));
-
-      await faceapi.nets.tinyFaceDetector.loadFromUri("models");
-      await faceapi.nets.faceLandmark68Net.loadFromUri("models");
-      await faceapi.nets.faceRecognitionNet.loadFromUri("models");
-
-      video.addEventListener("play", () => {
+      try {
+        // Load face-api models
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
+        
+        const video = document.getElementById("video");
+        
+        // Stop any existing stream
+        if (videoStream) {
+          videoStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Get new stream
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        video.srcObject = videoStream;
+        
+        // Create canvas for face detection overlay
         const canvas = faceapi.createCanvasFromMedia(video);
-        document.body.append(canvas);
+        document.querySelector('.scanner-container').append(canvas);
         const displaySize = { width: video.width, height: video.height };
         faceapi.matchDimensions(canvas, displaySize);
+        
+        // Clear any existing interval
+        if (scanInterval) {
+          clearInterval(scanInterval);
+        }
+        
+        // Set up scanning interval
+        scanInterval = setInterval(async () => {
+          try {
+            const detections = await faceapi.detectAllFaces(
+              video, 
+              new faceapi.TinyFaceDetectorOptions()
+            ).withFaceLandmarks().withFaceDescriptors();
+            
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            
+            // Clear canvas
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw detections
+            faceapi.draw.drawDetections(canvas, resizedDetections);
+            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+            
+            // Check for matches
+            if (resizedDetections.length > 0) {
+              for (const detection of resizedDetections) {
+                const descriptor = detection.descriptor;
+                const bestMatch = findBestMatch(descriptor);
+                
+                if (bestMatch) {
+                  updateStatus(bestMatch.id);
+                }
+              }
+            }
+          } catch (detectionError) {
+            console.error("Error during face detection:", detectionError);
+          }
+        }, 2000); // Scan every 2 seconds
+        
+      } catch (err) {
+        console.error("Error starting scanner:", err);
+        alert("Error accessing camera: " + err.message);
+      }
+    }
 
-        setInterval(async () => {
-          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                                        .withFaceLandmarks()
-                                        .withFaceDescriptors();
+    function stopScanner() {
+      // Clear scanning interval
+      if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+      }
+      
+      // Stop video stream
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+      
+      const video = document.getElementById("video");
+      video.srcObject = null;
+      
+      // Remove canvas if exists
+      const canvas = document.querySelector('canvas');
+      if (canvas) {
+        canvas.remove();
+      }
+    }
+
+    function findBestMatch(queryDescriptor) {
+      if (labeledDescriptors.length === 0) return null;
+
+      let minDistance = Infinity;
+      let matched = null;
+
+      for (const attendee of labeledDescriptors) {
+        const distance = faceapi.euclideanDistance(queryDescriptor, attendee.descriptor);
+        if (distance < 0.6 && distance < minDistance) {
+          minDistance = distance;
+          matched = attendee;
+        }
+      }
+
+      return matched;
+    }
+
+    async function updateStatus(id) {
+      try {
+        // Update in database
+        const { error } = await supabase
+          .from("attendees")
+          .update({ status: "Checked" })
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error updating status:", error);
+          return;
+        }
+
+        // Update in page
+        const li = document.getElementById(`attendee-${id}`);
+        if (li) {
+          const statusSpan = li.querySelector('span:last-child');
+          if (statusSpan) {
+            statusSpan.textContent = "Checked";
+            statusSpan.className = "status-checked";
+          }
+        }
+      } catch (err) {
+        console.error("Error in updateStatus:", err);
+      }
+    }
+
+    // Initialize when page loads
+    window.addEventListener('load', () => {
+      loadAttendees();
+    });
+    
+    // Clean up when leaving page
+    window.addEventListener('beforeunload', () => {
+      stopScanner();
+    });
+  </script>
+</body>
+</html>
