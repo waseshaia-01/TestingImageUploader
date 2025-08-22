@@ -1,334 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Upload Troubleshooter</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-        
-        header {
-            background: #4a6fa5;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        
-        .content {
-            padding: 25px;
-        }
-        
-        .issue-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-left: 5px solid #4a6fa5;
-        }
-        
-        h2 {
-            color: #4a6fa5;
-            margin-bottom: 15px;
-            font-size: 22px;
-        }
-        
-        h3 {
-            color: #5a7fb8;
-            margin: 15px 0 10px;
-            font-size: 18px;
-        }
-        
-        p {
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        
-        ul {
-            margin-left: 20px;
-            margin-bottom: 15px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-        }
-        
-        code {
-            background: #e9ecef;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-        
-        .upload-section {
-            background: #e8f4f8;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .upload-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        input, button {
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-        }
-        
-        input[type="file"] {
-            padding: 10px;
-        }
-        
-        button {
-            background: #4a6fa5;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-weight: 600;
-        }
-        
-        button:hover {
-            background: #3a5a8a;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-        }
-        
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .troubleshoot-tip {
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Upload Attendee Face</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    
+    header {
+      background: #4a6fa5;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .content {
+      padding: 25px;
+    }
+    
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    label {
+      font-weight: 600;
+      color: #4a6fa5;
+    }
+    
+    input, button {
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    
+    input[type="file"] {
+      padding: 10px;
+    }
+    
+    button {
+      background: #4a6fa5;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background: #3a5a8a;
+    }
+    
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .troubleshoot-tip {
+      background: #fff3cd;
+      border-left: 5px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #6c757d;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Image Upload Troubleshooter</h1>
-            <p class="subtitle">Identify and fix common image upload issues</p>
-        </header>
-        
-        <div class="content">
-            <div class="issue-section">
-                <h2>Common Reasons for Upload Failures</h2>
-                
-                <h3>1. Incorrect Supabase Configuration</h3>
-                <p>Your Supabase project might not be properly configured for storage access.</p>
-                <ul>
-                    <li>Check if your Supabase URL and API key are correct</li>
-                    <li>Verify that the "images" bucket exists in your Supabase storage</li>
-                    <li>Ensure your bucket has the right permissions (set to public if needed)</li>
-                </ul>
-                
-                <h3>2. CORS Issues</h3>
-                <p>Cross-Origin Resource Sharing (CORS) policies might be blocking your requests.</p>
-                <ul>
-                    <li>Check your Supabase storage CORS settings</li>
-                    <li>Ensure your domain is allowed in the CORS configuration</li>
-                </ul>
-                
-                <h3>3. File Size Limitations</h3>
-                <p>Supabase has default file size limits for uploads.</p>
-                <ul>
-                    <li>Check if your image exceeds the size limit (default is 50MB for free tier)</li>
-                    <li>Resize large images before uploading</li>
-                </ul>
-                
-                <h3>4. Authentication Issues</h3>
-                <p>Your API key might have insufficient permissions.</p>
-                <ul>
-                    <li>Verify that your anon key has the right storage permissions</li>
-                    <li>Check if your Supabase project has Row Level Security (RLS) enabled</li>
-                </ul>
-            </div>
-            
-            <div class="upload-section">
-                <h2>Test Your Upload</h2>
-                <p>Try uploading an image to check if the issue is resolved:</p>
-                
-                <div class="upload-form">
-                    <input type="text" id="nameInput" placeholder="Enter Name" required>
-                    <input type="file" id="fileInput" accept="image/*" required>
-                    <button onclick="uploadFace()">Upload Image</button>
-                </div>
-                
-                <div id="statusMessage" class="status"></div>
-                
-                <div class="troubleshoot-tip">
-                    <p><strong>Troubleshooting Tip:</strong> Open your browser's developer tools (F12) and check the Console tab for error messages when uploading. This can provide clues about what's going wrong.</p>
-                </div>
-            </div>
+  <div class="container">
+    <header>
+      <h1>Upload Attendee Face</h1>
+    </header>
+    
+    <div class="content">
+      <div class="upload-form">
+        <div class="form-group">
+          <label for="nameInput">Full Name</label>
+          <input type="text" id="nameInput" placeholder="Enter attendee's name">
         </div>
         
-        <footer>
-            <p>If issues persist, check your Supabase project settings and browser console for detailed error messages.</p>
-        </footer>
+        <div class="form-group">
+          <label for="fileInput">Profile Image</label>
+          <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <button onclick="uploadFace()">Upload Attendee</button>
+      </div>
+      
+      <div id="statusMessage" class="status"></div>
+      
+      <div class="troubleshoot-tip">
+        <p><strong>Troubleshooting Tip:</strong> If upload fails, check your browser's console (F12) for error messages.</p>
+      </div>
     </div>
+    
+    <footer>
+      <p>Return to <a href="index.html" style="color: #4a6fa5;">Face Scanner</a></p>
+    </footer>
+  </div>
 
-    <script>
-        // Initialize Supabase
-        const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-        const BUCKET_NAME = "images";
+  <script>
+    // Initialize Supabase client FIRST
+    const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
+    const BUCKET_NAME = "images";
+    
+    // Initialize Supabase client
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Function to show status message
+    function showStatus(message, isError = false) {
+      const statusElement = document.getElementById('statusMessage');
+      statusElement.textContent = message;
+      statusElement.className = isError ? 'status error' : 'status success';
+      statusElement.style.display = 'block';
+      
+      // Scroll to status message
+      statusElement.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    async function uploadFace() {
+      const name = document.getElementById("nameInput").value.trim();
+      const fileInput = document.getElementById("fileInput");
+      
+      // Validate inputs
+      if (!name) { 
+        showStatus("Please enter a name", true);
+        return; 
+      }
+      
+      if (fileInput.files.length === 0) { 
+        showStatus("Please select a file", true);
+        return; 
+      }
+      
+      const file = fileInput.files[0];
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showStatus("Please select an image file", true);
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        showStatus("Image must be smaller than 5MB", true);
+        return;
+      }
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      
+      showStatus("Uploading image...", false);
+      
+      try {
+        // 1️⃣ Upload image to bucket
+        let { data: uploadData, error: uploadError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(fileName, file);
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // Function to show status message
-        function showStatus(message, isError = false) {
-            const statusElement = document.getElementById('statusMessage');
-            statusElement.textContent = message;
-            statusElement.className = isError ? 'status error' : 'status success';
-            statusElement.style.display = 'block';
-            
-            // Scroll to status message
-            statusElement.scrollIntoView({ behavior: 'smooth' });
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          showStatus("Upload failed: " + uploadError.message, true);
+          return;
         }
         
-        async function uploadFace() {
-            const name = document.getElementById("nameInput").value.trim();
-            const fileInput = document.getElementById("fileInput");
-            
-            // Validate inputs
-            if (!name) { 
-                showStatus("Please enter a name", true);
-                return; 
-            }
-            
-            if (fileInput.files.length === 0) { 
-                showStatus("Please select a file", true);
-                return; 
-            }
-            
-            const file = fileInput.files[0];
-            
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showStatus("Please select an image file", true);
-                return;
-            }
-            
-            // Validate file size (5MB limit)
-            if (file.size > 5 * 1024 * 1024) {
-                showStatus("Image must be smaller than 5MB", true);
-                return;
-            }
-            
-            const fileName = `${Date.now()}_${file.name}`;
-            
-            showStatus("Uploading image...", false);
-            
-            try {
-                // 1️⃣ Upload image to bucket
-                let { data: uploadData, error: uploadError } = await supabase.storage
-                    .from(BUCKET_NAME)
-                    .upload(fileName, file);
-                
-                if (uploadError) {
-                    console.error("Upload error:", uploadError);
-                    showStatus("Upload failed: " + uploadError.message, true);
-                    return;
-                }
-                
-                // 2️⃣ Get public URL of uploaded image
-                const { data: urlData } = supabase.storage
-                    .from(BUCKET_NAME)
-                    .getPublicUrl(fileName);
-                    
-                const imageUrl = urlData.publicUrl;
-                
-                // 3️⃣ Insert attendee into table
-                let { data: insertData, error: insertError } = await supabase
-                    .from("attendees")
-                    .insert([
-                        { name: name, image_url: imageUrl, status: "Pending" }
-                    ]);
-                
-                if (insertError) {
-                    console.error("Insert error:", insertError);
-                    showStatus("Failed to insert attendee: " + insertError.message, true);
-                    return;
-                }
-                
-                showStatus("Attendee uploaded successfully!", false);
-                
-                // Reset form
-                fileInput.value = "";
-                document.getElementById("nameInput").value = "";
-                
-            } catch (error) {
-                console.error("Unexpected error:", error);
-                showStatus("An unexpected error occurred: " + error.message, true);
-            }
+        // 2️⃣ Get public URL of uploaded image
+        const { data: urlData } = supabase.storage
+          .from(BUCKET_NAME)
+          .getPublicUrl(fileName);
+          
+        const imageUrl = urlData.publicUrl;
+        
+        // 3️⃣ Insert attendee into table
+        let { data: insertData, error: insertError } = await supabase
+          .from("attendees")
+          .insert([
+            { name: name, image_url: imageUrl, status: "Pending" }
+          ]);
+        
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          showStatus("Failed to insert attendee: " + insertError.message, true);
+          return;
         }
-    </script>
+        
+        showStatus("Attendee uploaded successfully!", false);
+        
+        // Reset form
+        fileInput.value = "";
+        document.getElementById("nameInput").value = "";
+        
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        showStatus("An unexpected error occurred: " + error.message, true);
+      }
+    }
+  </script>
 </body>
 </html>
