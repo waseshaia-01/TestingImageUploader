@@ -123,6 +123,16 @@
       color: #6c757d;
       font-size: 14px;
     }
+    
+    footer a {
+      color: #4a6fa5;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -143,7 +153,7 @@
           <input type="file" id="fileInput" accept="image/*">
         </div>
         
-        <button onclick="uploadFace()">Upload Attendee</button>
+        <button id="uploadButton">Upload Attendee</button>
       </div>
       
       <div id="statusMessage" class="status"></div>
@@ -154,106 +164,113 @@
     </div>
     
     <footer>
-      <p>Return to <a href="index.html" style="color: #4a6fa5;">Face Scanner</a></p>
+      <p>Return to <a href="index.html">Face Scanner</a></p>
     </footer>
   </div>
 
   <script>
-    // Initialize Supabase client FIRST
-    const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const BUCKET_NAME = "images";
-    
-    // Initialize Supabase client
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    // Function to show status message
-    function showStatus(message, isError = false) {
-      const statusElement = document.getElementById('statusMessage');
-      statusElement.textContent = message;
-      statusElement.className = isError ? 'status error' : 'status success';
-      statusElement.style.display = 'block';
+    // Initialize Supabase client after the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Supabase configuration
+      const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
+      const BUCKET_NAME = "images";
       
-      // Scroll to status message
-      statusElement.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    async function uploadFace() {
-      const name = document.getElementById("nameInput").value.trim();
-      const fileInput = document.getElementById("fileInput");
+      // Initialize Supabase client
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       
-      // Validate inputs
-      if (!name) { 
-        showStatus("Please enter a name", true);
-        return; 
-      }
-      
-      if (fileInput.files.length === 0) { 
-        showStatus("Please select a file", true);
-        return; 
-      }
-      
-      const file = fileInput.files[0];
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        showStatus("Please select an image file", true);
-        return;
-      }
-      
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        showStatus("Image must be smaller than 5MB", true);
-        return;
-      }
-      
-      const fileName = `${Date.now()}_${file.name}`;
-      
-      showStatus("Uploading image...", false);
-      
-      try {
-        // 1️⃣ Upload image to bucket
-        let { data: uploadData, error: uploadError } = await supabase.storage
-          .from(BUCKET_NAME)
-          .upload(fileName, file);
+      // Function to show status message
+      function showStatus(message, isError = false) {
+        const statusElement = document.getElementById('statusMessage');
+        statusElement.textContent = message;
+        statusElement.className = isError ? 'status error' : 'status success';
+        statusElement.style.display = 'block';
         
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          showStatus("Upload failed: " + uploadError.message, true);
+        // Scroll to status message
+        statusElement.scrollIntoView({ behavior: 'smooth' });
+      }
+      
+      // Upload function
+      async function uploadFace() {
+        const name = document.getElementById("nameInput").value.trim();
+        const fileInput = document.getElementById("fileInput");
+        
+        // Validate inputs
+        if (!name) { 
+          showStatus("Please enter a name", true);
+          return; 
+        }
+        
+        if (fileInput.files.length === 0) { 
+          showStatus("Please select a file", true);
+          return; 
+        }
+        
+        const file = fileInput.files[0];
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          showStatus("Please select an image file", true);
           return;
         }
         
-        // 2️⃣ Get public URL of uploaded image
-        const { data: urlData } = supabase.storage
-          .from(BUCKET_NAME)
-          .getPublicUrl(fileName);
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+          showStatus("Image must be smaller than 5MB", true);
+          return;
+        }
+        
+        const fileName = `${Date.now()}_${file.name}`;
+        
+        showStatus("Uploading image...", false);
+        
+        try {
+          // 1️⃣ Upload image to bucket
+          let { data: uploadData, error: uploadError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(fileName, file);
           
-        const imageUrl = urlData.publicUrl;
-        
-        // 3️⃣ Insert attendee into table
-        let { data: insertData, error: insertError } = await supabase
-          .from("attendees")
-          .insert([
-            { name: name, image_url: imageUrl, status: "Pending" }
-          ]);
-        
-        if (insertError) {
-          console.error("Insert error:", insertError);
-          showStatus("Failed to insert attendee: " + insertError.message, true);
-          return;
+          if (uploadError) {
+            console.error("Upload error:", uploadError);
+            showStatus("Upload failed: " + uploadError.message, true);
+            return;
+          }
+          
+          // 2️⃣ Get public URL of uploaded image
+          const { data: urlData } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(fileName);
+            
+          const imageUrl = urlData.publicUrl;
+          
+          // 3️⃣ Insert attendee into table
+          let { data: insertData, error: insertError } = await supabase
+            .from("attendees")
+            .insert([
+              { name: name, image_url: imageUrl, status: "Pending" }
+            ]);
+          
+          if (insertError) {
+            console.error("Insert error:", insertError);
+            showStatus("Failed to insert attendee: " + insertError.message, true);
+            return;
+          }
+          
+          showStatus("Attendee uploaded successfully!", false);
+          
+          // Reset form
+          fileInput.value = "";
+          document.getElementById("nameInput").value = "";
+          
+        } catch (error) {
+          console.error("Unexpected error:", error);
+          showStatus("An unexpected error occurred: " + error.message, true);
         }
-        
-        showStatus("Attendee uploaded successfully!", false);
-        
-        // Reset form
-        fileInput.value = "";
-        document.getElementById("nameInput").value = "";
-        
-      } catch (error) {
-        console.error("Unexpected error:", error);
-        showStatus("An unexpected error occurred: " + error.message, true);
       }
-    }
+      
+      // Add event listener to button
+      document.getElementById('uploadButton').addEventListener('click', uploadFace);
+    });
   </script>
 </body>
 </html>
