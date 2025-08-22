@@ -247,19 +247,20 @@
         showStatus("Loading face recognition models...", "loading");
         
         // Load face-api models
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
         
         modelsLoaded = true;
         showStatus("Models loaded successfully!", "success");
         setTimeout(hideStatus, 2000);
         return true;
-      } catch (error) {
-        console.error("Error loading models:", error);
-        showStatus("Error loading face recognition models. Check console for details.", "error");
-        return false;
-      }
+      } 
+      catch (error) 
+      {
+      console.error("Face detection error:", error);
+      // Add user-friendly error message
+    }
     }
 
     async function startScanner() {
