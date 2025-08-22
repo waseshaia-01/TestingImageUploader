@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Scanner - Auto Scanning</title>
+  <title>Face Scanner - Enhanced Feedback</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
@@ -70,6 +70,11 @@
       box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
     }
     
+    .detection-active video {
+      border: 2px solid #f39c12;
+      box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
+    }
+    
     .scanner-container canvas {
       position: absolute;
       top: 0;
@@ -83,7 +88,6 @@
       bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(46, 204, 113, 0.9);
       color: white;
       padding: 5px 15px;
       border-radius: 20px;
@@ -94,13 +98,25 @@
       animation: pulse 1.5s infinite;
     }
     
+    .scanning-indicator {
+      background: rgba(46, 204, 113, 0.9);
+    }
+    
+    .detection-indicator {
+      background: rgba(243, 156, 18, 0.9);
+    }
+    
     @keyframes pulse {
       0% { opacity: 0.7; }
       50% { opacity: 1; }
       100% { opacity: 0.7; }
     }
     
-    .scanning-active .scan-indicator {
+    .scanning-active .scanning-indicator {
+      display: block;
+    }
+    
+    .detection-active .detection-indicator {
       display: block;
     }
     
@@ -118,15 +134,40 @@
       transition: opacity 0.3s ease;
     }
     
+    .detection-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #f39c12;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(243, 156, 18, 0.7);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
     .scanning-active .scan-animation {
       opacity: 1;
       animation: scan 2s infinite;
+    }
+    
+    .detection-active .detection-animation {
+      opacity: 1;
+      animation: detection 2s infinite;
     }
     
     @keyframes scan {
       0% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.7); }
       50% { box-shadow: 0 0 25px rgba(46, 204, 113, 0.9); }
       100% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.7); }
+    }
+    
+    @keyframes detection {
+      0% { box-shadow: 0 0 10px rgba(243, 156, 18, 0.7); }
+      50% { box-shadow: 0 0 25px rgba(243, 156, 18, 0.9); }
+      100% { box-shadow: 0 0 10px rgba(243, 156, 18, 0.7); }
     }
     
     .status-message {
@@ -152,6 +193,12 @@
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
+    }
+    
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
     }
     
     .progress-container {
@@ -260,6 +307,21 @@
       color: #7f8c8d;
     }
     
+    .recognition-feedback {
+      text-align: center;
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f8f9fa;
+      display: none;
+    }
+    
+    .unknown-face {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+    
     @media (max-width: 600px) {
       .nav-buttons {
         flex-direction: column;
@@ -289,11 +351,17 @@
       <div class="scanner-container" id="scannerContainer">
         <video id="video" width="400" height="300" autoplay muted playsinline></video>
         <div class="scan-animation"></div>
-        <div class="scan-indicator">Scanning Active</div>
+        <div class="detection-animation"></div>
+        <div class="scan-indicator scanning-indicator">Scanning Active</div>
+        <div class="scan-indicator detection-indicator">Face Detected - Processing</div>
       </div>
       
       <div id="statusMessage" class="status-message status-loading">
         Initializing face recognition system...
+      </div>
+      
+      <div id="recognitionFeedback" class="recognition-feedback">
+        Face detected but not recognized. Please upload your face image if you haven't already.
       </div>
       
       <div id="modelLoadingInfo" class="model-loading-info">
@@ -339,6 +407,7 @@
     let modelsLoaded = false;
     let detectionCount = 0;
     let lastRecognized = null;
+    let lastDetectionTime = 0;
 
     // DOM elements
     const statusMessage = document.getElementById('statusMessage');
@@ -348,11 +417,23 @@
     const scannerContainer = document.getElementById('scannerContainer');
     const detectionCounter = document.getElementById('detectionCounter');
     const lastDetection = document.getElementById('lastDetection');
+    const recognitionFeedback = document.getElementById('recognitionFeedback');
 
     function showStatus(message, type = 'loading') {
       statusMessage.textContent = message;
       statusMessage.className = `status-message status-${type}`;
       statusMessage.style.display = 'block';
+    }
+
+    function showRecognitionFeedback(show, isUnknown = false) {
+      if (show) {
+        recognitionFeedback.style.display = 'block';
+        recognitionFeedback.className = isUnknown ? 
+          'recognition-feedback unknown-face' : 
+          'recognition-feedback';
+      } else {
+        recognitionFeedback.style.display = 'none';
+      }
     }
 
     function updateProgress(percent, modelName = '') {
@@ -364,9 +445,23 @@
     function setScanningUI(active) {
       if (active) {
         scannerContainer.classList.add('scanning-active');
+        scannerContainer.classList.remove('detection-active');
         showStatus("Scanner active. Looking for faces...", "success");
+        showRecognitionFeedback(false);
       } else {
         scannerContainer.classList.remove('scanning-active');
+        scannerContainer.classList.remove('detection-active');
+      }
+    }
+
+    function setDetectionUI(active) {
+      if (active) {
+        scannerContainer.classList.remove('scanning-active');
+        scannerContainer.classList.add('detection-active');
+        showStatus("Face detected! Processing...", "warning");
+      } else {
+        scannerContainer.classList.remove('detection-active');
+        setScanningUI(true);
       }
     }
 
@@ -580,21 +675,44 @@
               faceapi.draw.drawDetections(canvas, resizedDetections);
               faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
               
+              // Show detection UI
+              setDetectionUI(true);
+              lastDetectionTime = Date.now();
+              
               // Check for matches
+              let recognized = false;
               for (const detection of resizedDetections) {
                 const descriptor = detection.descriptor;
                 const bestMatch = findBestMatch(descriptor);
                 
                 if (bestMatch) {
+                  recognized = true;
                   updateLastRecognition(bestMatch.name);
                   updateStatus(bestMatch.id);
+                  showRecognitionFeedback(false);
                 }
               }
+              
+              // Show message if face detected but not recognized
+              if (!recognized) {
+                showRecognitionFeedback(true, true);
+              }
+              
+              // Return to scanning UI after a delay
+              setTimeout(() => {
+                if (Date.now() - lastDetectionTime > 1500) {
+                  setScanningUI(true);
+                }
+              }, 2000);
+            } else {
+              setScanningUI(true);
+              showRecognitionFeedback(false);
             }
           } catch (detectionError) {
             console.error("Error during face detection:", detectionError);
+            setScanningUI(true);
           }
-        }, 2000); // Scan every 2 seconds
+        }, 1500); // Scan every 1.5 seconds
         
       } catch (err) {
         console.error("Error starting scanner:", err);
