@@ -3,151 +3,289 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Scanner</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <!-- Load face-api.js without defer -->
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <title>Face Scanner - Fixed</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      margin: 20px;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      min-height: 100vh;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
     .container {
       max-width: 800px;
-      margin: 0 auto;
+      width: 100%;
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
     }
+    
+    header {
+      background: linear-gradient(90deg, #4a6fa5 0%, #2c3e50 100%);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+    
     h1 {
-      color: #2c3e50;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .content {
+      padding: 25px;
+    }
+    
+    .scanner-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
       margin-bottom: 20px;
     }
+    
     video { 
       border: 2px solid #3498db; 
-      border-radius: 5px;
-      margin-bottom: 20px;
+      border-radius: 8px;
       background: #000;
+      max-width: 100%;
+      height: auto;
     }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
     button { 
-      margin: 10px; 
-      padding: 10px 20px; 
+      padding: 12px 20px; 
       cursor: pointer; 
       background-color: #3498db;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-size: 16px;
-      transition: background-color 0.3s;
+      transition: all 0.3s;
+      min-width: 150px;
     }
+    
     button:hover {
       background-color: #2980b9;
+      transform: translateY(-2px);
     }
+    
     button:disabled {
       background-color: #95a5a6;
       cursor: not-allowed;
+      transform: none;
     }
-    ul { 
-      list-style: none; 
-      padding: 0; 
-      margin-top: 20px;
-      text-align: left;
-      max-width: 400px;
-      margin: 20px auto;
-    }
-    li { 
-      margin: 10px 0; 
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .status-pending {
-      color: #e74c3c;
-      font-weight: bold;
-    }
-    .status-checked {
-      color: #27ae60;
-      font-weight: bold;
-    }
-    .nav-buttons {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-    .scanner-container {
-      position: relative;
-      display: inline-block;
-    }
+    
     .instructions {
       background: #e8f4fc;
-      padding: 15px;
-      border-radius: 5px;
+      padding: 20px;
+      border-radius: 8px;
       margin: 20px 0;
       text-align: left;
     }
+    
+    .instructions h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    
+    .instructions ol {
+      padding-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    
     .status-message {
       margin: 15px 0;
-      padding: 10px;
-      border-radius: 5px;
+      padding: 15px;
+      border-radius: 8px;
       display: none;
+      text-align: center;
     }
+    
     .status-loading {
       background: #d1ecf1;
       color: #0c5460;
       border: 1px solid #bee5eb;
     }
+    
     .status-error {
       background: #f8d7da;
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+    
     .status-success {
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
     }
+    
+    .attendees-section {
+      margin-top: 25px;
+    }
+    
+    .attendees-section h2 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    #attendeeList {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto;
+      max-width: 500px;
+    }
+    
+    #attendeeList li {
+      background: #f8f9fa;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .status-pending {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    
+    .status-checked {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .nav-buttons button {
+      background: #2c3e50;
+      min-width: 200px;
+    }
+    
+    .nav-buttons button:hover {
+      background: #1a252f;
+    }
+    
+    .camera-permission {
+      text-align: center;
+      padding: 20px;
+      background: #fff3cd;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 5px solid #ffc107;
+    }
+    
+    .camera-permission h3 {
+      color: #856404;
+      margin-bottom: 10px;
+    }
+    
+    .permission-help {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    
+    @media (max-width: 600px) {
+      .controls, .nav-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      button {
+        width: 100%;
+        max-width: 300px;
+      }
+      
+      video {
+        width: 100%;
+        height: auto;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Face Scanner</h1>
+    <header>
+      <h1>Face Scanner</h1>
+      <p>Advanced facial recognition attendance system</p>
+    </header>
     
-    <div class="instructions">
-      <h3>How to use:</h3>
-      <ol>
-        <li>Make sure you're in a well-lit environment</li>
-        <li>Allow camera access when prompted</li>
-        <li>Position your face in the frame</li>
-        <li>The system will automatically detect and verify your identity</li>
-      </ol>
-    </div>
-    
-    <div class="scanner-container">
-      <video id="video" width="400" height="300" autoplay muted></video>
-    </div>
-    
-    <div id="statusMessage" class="status-message"></div>
-    
-    <div>
-      <button id="startButton" onclick="startScanner()">Start Scanner</button>
-      <button id="stopButton" onclick="stopScanner()" disabled>Stop Scanner</button>
-    </div>
-    
-    <h2>Attendees</h2>
-    <ul id="attendeeList">
-      <li>Loading attendees...</li>
-    </ul>
-    
-    <div class="nav-buttons">
-      <button onclick="goToUpload()">Upload New Attendee</button>
-      <button onclick="goToDashboard()">View Dashboard</button>
+    <div class="content">
+      <div class="instructions">
+        <h3>How to use:</h3>
+        <ol>
+          <li>Make sure you're in a well-lit environment</li>
+          <li>Allow camera access when prompted</li>
+          <li>Position your face in the frame</li>
+          <li>The system will automatically detect and verify your identity</li>
+        </ol>
+      </div>
+      
+      <div class="camera-permission">
+        <h3>Camera Access Required</h3>
+        <p>This application needs camera access to function properly. Please allow camera permissions when prompted.</p>
+        <div class="permission-help">
+          <p><strong>If you've previously denied access:</strong></p>
+          <ul>
+            <li>Look for the camera icon in your browser's address bar</li>
+            <li>Click it and select "Always allow"</li>
+            <li>Refresh the page and try again</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="scanner-container">
+        <video id="video" width="400" height="300" autoplay muted playsinline></video>
+      </div>
+      
+      <div id="statusMessage" class="status-message"></div>
+      
+      <div class="controls">
+        <button id="startButton">Start Scanner</button>
+        <button id="stopButton" disabled>Stop Scanner</button>
+      </div>
+      
+      <div class="attendees-section">
+        <h2>Attendees</h2>
+        <ul id="attendeeList">
+          <li>Loading attendees...</li>
+        </ul>
+      </div>
+      
+      <div class="nav-buttons">
+        <button onclick="goToUpload()">Upload New Attendee</button>
+        <button onclick="goToDashboard()">View Dashboard</button>
+      </div>
     </div>
   </div>
 
@@ -155,22 +293,27 @@
     // Initialize Supabase client
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let labeledDescriptors = [];
     let scanInterval;
     let videoStream;
     let modelsLoaded = false;
 
+    // DOM elements
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const statusMessage = document.getElementById('statusMessage');
+    const video = document.getElementById('video');
+
     function showStatus(message, type = 'loading') {
-      const statusElement = document.getElementById('statusMessage');
-      statusElement.textContent = message;
-      statusElement.className = `status-message status-${type}`;
-      statusElement.style.display = 'block';
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message status-${type}`;
+      statusMessage.style.display = 'block';
     }
 
     function hideStatus() {
-      document.getElementById('statusMessage').style.display = 'none';
+      statusMessage.style.display = 'none';
     }
 
     function goToUpload() { 
@@ -197,28 +340,37 @@
           return;
         }
 
-        for (const a of attendees) {
-          try {
-            const img = await faceapi.fetchImage(a.image_url);
-            const detection = await faceapi.detectSingleFace(img)
-                                        .withFaceLandmarks()
-                                        .withFaceDescriptor();
-            if (detection) {
-              labeledDescriptors.push({
-                id: a.id, 
-                name: a.name, 
-                descriptor: detection.descriptor
-              });
-            }
-          } catch (imgError) {
-            console.error(`Error processing image for ${a.name}:`, imgError);
-          }
-        }
-
+        // Display attendees immediately
         displayAttendees(attendees);
+        
+        // Load face descriptors in background
+        loadFaceDescriptors(attendees);
       } catch (err) {
         console.error("Unexpected error in loadAttendees:", err);
+        document.getElementById("attendeeList").innerHTML = "<li>Error loading attendees</li>";
       }
+    }
+
+    async function loadFaceDescriptors(attendees) {
+      for (const a of attendees) {
+        try {
+          const img = await faceapi.fetchImage(a.image_url);
+          const detection = await faceapi.detectSingleFace(img)
+                                      .withFaceLandmarks()
+                                      .withFaceDescriptor();
+          if (detection) {
+            labeledDescriptors.push({
+              id: a.id, 
+              name: a.name, 
+              descriptor: detection.descriptor
+            });
+          }
+        } catch (imgError) {
+          console.error(`Error processing image for ${a.name}:`, imgError);
+        }
+      }
+      
+      console.log(`Loaded ${labeledDescriptors.length} face descriptors`);
     }
 
     function displayAttendees(attendees) {
@@ -246,40 +398,37 @@
       try {
         showStatus("Loading face recognition models...", "loading");
         
-        // Load face-api models
-        await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
+        // Load face-api models from your GitHub Pages directory
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
         
         modelsLoaded = true;
         showStatus("Models loaded successfully!", "success");
         setTimeout(hideStatus, 2000);
         return true;
-      } 
-      catch (error) 
-      {
-      console.error("Face detection error:", error);
-      // Add user-friendly error message
-    }
+      } catch (error) {
+        console.error("Error loading models:", error);
+        showStatus("Error loading face recognition models. Check console for details.", "error");
+        return false;
+      }
     }
 
     async function startScanner() {
       try {
         // Update button states
-        document.getElementById('startButton').disabled = true;
-        document.getElementById('stopButton').disabled = false;
+        startButton.disabled = true;
+        stopButton.disabled = false;
         
         // Load models if not already loaded
         if (!modelsLoaded) {
           const success = await loadModels();
           if (!success) {
-            document.getElementById('startButton').disabled = false;
-            document.getElementById('stopButton').disabled = true;
+            startButton.disabled = false;
+            stopButton.disabled = true;
             return;
           }
         }
-        
-        const video = document.getElementById("video");
         
         // Stop any existing stream
         if (videoStream) {
@@ -288,11 +437,31 @@
         
         // Get new stream
         showStatus("Accessing camera...", "loading");
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
-        video.srcObject = videoStream;
-        hideStatus();
+        
+        try {
+          videoStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: 'user',
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            } 
+          });
+          video.srcObject = videoStream;
+          hideStatus();
+        } catch (cameraError) {
+          console.error("Camera access error:", cameraError);
+          showStatus(`Camera error: ${cameraError.message}`, "error");
+          startButton.disabled = false;
+          stopButton.disabled = true;
+          return;
+        }
         
         // Create canvas for face detection overlay
+        const existingCanvas = document.querySelector('canvas');
+        if (existingCanvas) {
+          existingCanvas.remove();
+        }
+        
         const canvas = faceapi.createCanvasFromMedia(video);
         document.querySelector('.scanner-container').append(canvas);
         const displaySize = { width: video.width, height: video.height };
@@ -306,6 +475,8 @@
         // Set up scanning interval
         scanInterval = setInterval(async () => {
           try {
+            if (labeledDescriptors.length === 0) return;
+            
             const detections = await faceapi.detectAllFaces(
               video, 
               new faceapi.TinyFaceDetectorOptions()
@@ -338,11 +509,11 @@
         
       } catch (err) {
         console.error("Error starting scanner:", err);
-        showStatus("Error accessing camera: " + err.message, "error");
+        showStatus("Error: " + err.message, "error");
         
         // Re-enable start button
-        document.getElementById('startButton').disabled = false;
-        document.getElementById('stopButton').disabled = true;
+        startButton.disabled = false;
+        stopButton.disabled = true;
       }
     }
 
@@ -359,7 +530,6 @@
         videoStream = null;
       }
       
-      const video = document.getElementById("video");
       video.srcObject = null;
       
       // Remove canvas if exists
@@ -369,8 +539,8 @@
       }
       
       // Update button states
-      document.getElementById('startButton').disabled = false;
-      document.getElementById('stopButton').disabled = true;
+      startButton.disabled = false;
+      stopButton.disabled = true;
       
       showStatus("Scanner stopped", "success");
       setTimeout(hideStatus, 2000);
@@ -422,6 +592,10 @@
 
     // Initialize when page loads
     window.addEventListener('load', () => {
+      // Add event listeners to buttons
+      startButton.addEventListener('click', startScanner);
+      stopButton.addEventListener('click', stopScanner);
+      
       loadAttendees();
     });
     
