@@ -23,7 +23,9 @@
   <script>
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
     let labeledDescriptors = [];
 
@@ -62,9 +64,9 @@
         .then(stream => video.srcObject = stream)
         .catch(err => console.error(err));
 
-      await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
-      await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
-      await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+      await faceapi.nets.tinyFaceDetector.loadFromUri("models");
+      await faceapi.nets.faceLandmark68Net.loadFromUri("models");
+      await faceapi.nets.faceRecognitionNet.loadFromUri("models");
 
       video.addEventListener("play", () => {
         const canvas = faceapi.createCanvasFromMedia(video);
@@ -75,4 +77,4 @@
         setInterval(async () => {
           const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
                                         .withFaceLandmarks()
-                                        .withFac
+                                        .withFaceDescriptors();
