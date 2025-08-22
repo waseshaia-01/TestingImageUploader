@@ -279,8 +279,7 @@
       <div id="statusMessage" class="status-message"></div>
       
       <div class="controls">
-        <button id="startButton">Start Scanner</button>
-        <button id="stopButton" disabled>Stop Scanner</button>
+        <button id="stopButton">Stop Scanner</button>
       </div>
       
       <div class="attendees-section">
@@ -309,7 +308,6 @@
     let modelsLoaded = false;
 
     // DOM elements
-    const startButton = document.getElementById('startButton');
     const stopButton = document.getElementById('stopButton');
     const statusMessage = document.getElementById('statusMessage');
     const video = document.getElementById('video');
@@ -406,11 +404,12 @@
       try {
         showStatus("Loading face recognition models...", "loading");
         
-        // Load face-api models with corrected path
+        // Load face-api models with corrected path for GitHub Pages
+        const modelsPath = "https://waseshaia-01.github.io/TestingImageUploader/models";
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('./models')
+          faceapi.nets.tinyFaceDetector.loadFromUri(modelsPath),
+          faceapi.nets.faceLandmark68Net.loadFromUri(modelsPath),
+          faceapi.nets.faceRecognitionNet.loadFromUri(modelsPath)
         ]);
         
         modelsLoaded = true;
@@ -426,16 +425,10 @@
 
     async function startScanner() {
       try {
-        // Update button states
-        startButton.disabled = true;
-        stopButton.disabled = false;
-        
         // Load models if not already loaded
         if (!modelsLoaded) {
           const success = await loadModels();
           if (!success) {
-            startButton.disabled = false;
-            stopButton.disabled = true;
             return;
           }
         }
@@ -457,12 +450,19 @@
             } 
           });
           video.srcObject = videoStream;
+          
+          // Wait for video to be ready
+          await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+              video.play();
+              resolve();
+            };
+          });
+          
           hideStatus();
         } catch (cameraError) {
           console.error("Camera access error:", cameraError);
           showStatus(`Camera error: ${cameraError.message}`, "error");
-          startButton.disabled = false;
-          stopButton.disabled = true;
           return;
         }
         
@@ -520,10 +520,6 @@
       } catch (err) {
         console.error("Error starting scanner:", err);
         showStatus("Error: " + err.message, "error");
-        
-        // Re-enable start button
-        startButton.disabled = false;
-        stopButton.disabled = true;
       }
     }
 
@@ -548,12 +544,11 @@
         canvas.remove();
       }
       
-      // Update button states
-      startButton.disabled = false;
-      stopButton.disabled = true;
-      
       showStatus("Scanner stopped", "success");
       setTimeout(hideStatus, 2000);
+      
+      // Restart the scanner after stopping
+      setTimeout(startScanner, 3000);
     }
 
     function findBestMatch(queryDescriptor) {
@@ -601,17 +596,25 @@
     }
 
     // Initialize when page loads
-    window.addEventListener('load', () => {
-      // Add event listeners to buttons
-      startButton.addEventListener('click', startScanner);
+    window.addEventListener('load', async () => {
+      // Add event listener to stop button
       stopButton.addEventListener('click', stopScanner);
       
-      loadAttendees();
+      // Load attendees first
+      await loadAttendees();
+      
+      // Then start the scanner automatically
+      await startScanner();
     });
     
     // Clean up when leaving page
     window.addEventListener('beforeunload', () => {
-      stopScanner();
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+      if (scanInterval) {
+        clearInterval(scanInterval);
+      }
     });
   </script>
 </body>
