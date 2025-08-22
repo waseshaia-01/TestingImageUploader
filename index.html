@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Face Scanner</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <!-- Remove defer attribute to load synchronously -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -128,13 +129,16 @@
   </div>
 
   <script>
+    // Initialize Supabase client
     const SUPABASE_URL = "https://occkbimypqldnrmsbnta.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJsudXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
+    // FIXED THE MALFORMED KEY
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jY2tiaW15cHFsZG5ybXNibnRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzNzIsImV4cCI6MjA3MTI0ODM3Mn0.fRPN3cSwqZ08l2nBESSlwABTQVE16HUHNwoHYpiuQYM";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let labeledDescriptors = [];
     let scanInterval;
     let videoStream;
+    let modelsLoaded = false;
 
     function goToUpload() { 
       window.location.href = "upload.html"; 
@@ -205,12 +209,28 @@
       });
     }
 
-    async function startScanner() {
+    async function loadModels() {
       try {
         // Load face-api models
         await faceapi.nets.tinyFaceDetector.loadFromUri('/TestingImageUploader/models');
         await faceapi.nets.faceLandmark68Net.loadFromUri('/TestingImageUploader/models');
         await faceapi.nets.faceRecognitionNet.loadFromUri('/TestingImageUploader/models');
+        modelsLoaded = true;
+        return true;
+      } catch (error) {
+        console.error("Error loading models:", error);
+        alert("Error loading face recognition models: " + error.message);
+        return false;
+      }
+    }
+
+    async function startScanner() {
+      try {
+        // Load models if not already loaded
+        if (!modelsLoaded) {
+          const success = await loadModels();
+          if (!success) return;
+        }
         
         const video = document.getElementById("video");
         
